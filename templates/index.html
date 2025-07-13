@@ -1,0 +1,404 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Stock Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                </h2>
+                <p class="card-text">Welcome to your Stock Tracker dashboard. Monitor your portfolio and market trends in real-time.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Portfolio Summary Card -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-briefcase me-2"></i>Portfolio Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="portfolio-summary-loading" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading portfolio data...</p>
+                </div>
+                <div id="portfolio-summary-content" class="d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">Total Value:</h6>
+                        <h4 id="total-portfolio-value" class="mb-0 text-success">$0.00</h4>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Type</th>
+                                    <th>Price</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="portfolio-table-body">
+                                <!-- Portfolio data will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="portfolio-empty" class="alert alert-info d-none">
+                        Your portfolio is empty. <a href="{{ url_for('portfolio') }}">Add some holdings</a> to get started.
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('portfolio') }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-edit me-1"></i>Manage Portfolio
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts Card -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-bell me-2"></i>Active Alerts
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="alerts-loading" class="text-center py-5">
+                    <div class="spinner-border text-warning" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Checking alerts...</p>
+                </div>
+                <div id="alerts-content" class="d-none">
+                    <div id="triggered-alerts">
+                        <!-- Triggered alerts will be inserted here -->
+                    </div>
+                    <div id="alerts-empty" class="alert alert-info d-none">
+                        No active alerts. <a href="{{ url_for('alerts') }}">Set up alerts</a> to get notified about price movements.
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('alerts') }}" class="btn btn-sm btn-outline-warning">
+                    <i class="fas fa-cog me-1"></i>Manage Alerts
+                </a>
+                <button id="check-alerts-btn" class="btn btn-sm btn-outline-secondary ms-2">
+                    <i class="fas fa-sync-alt me-1"></i>Check Now
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Market Overview Card -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Market Overview
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="market-symbol" class="form-label">Quick Look-up:</label>
+                    <div class="input-group">
+                        <input type="text" id="market-symbol" class="form-control" placeholder="Enter symbol (e.g., AAPL)">
+                        <select id="market-asset-type" class="form-select">
+                            <option value="stock">Stock</option>
+                            <option value="crypto">Crypto</option>
+                        </select>
+                        <button id="market-lookup-btn" class="btn btn-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="market-result" class="d-none">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h5 id="market-symbol-display" class="card-title"></h5>
+                            <div class="row">
+                                <div class="col-6">
+                                    <p class="mb-1">Current Price:</p>
+                                    <h3 id="market-price" class="mb-3"></h3>
+                                </div>
+                                <div class="col-6">
+                                    <p class="mb-1">Change:</p>
+                                    <h3 id="market-change" class="mb-3"></h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="market-error" class="alert alert-danger d-none">
+                    Could not fetch data. Please check the symbol and try again.
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('prices') }}" class="btn btn-sm btn-outline-info">
+                    <i class="fas fa-search-dollar me-1"></i>More Prices
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historical Chart Card -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-area me-2"></i>Quick Chart
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="chart-symbol" class="form-label">Symbol:</label>
+                    <div class="input-group">
+                        <input type="text" id="chart-symbol" class="form-control" placeholder="Enter stock symbol (e.g., AAPL)">
+                        <button id="chart-lookup-btn" class="btn btn-success">
+                            <i class="fas fa-chart-bar"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="chart-container" style="height: 250px;">
+                    <canvas id="price-chart"></canvas>
+                </div>
+                <div id="chart-loading" class="text-center py-5 d-none">
+                    <div class="spinner-border text-success" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading chart data...</p>
+                </div>
+                <div id="chart-error" class="alert alert-danger d-none">
+                    Could not fetch historical data. Please check the symbol and try again.
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('historical') }}" class="btn btn-sm btn-outline-success">
+                    <i class="fas fa-chart-bar me-1"></i>Detailed Charts
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Load portfolio summary
+    function loadPortfolioSummary() {
+        document.getElementById('portfolio-summary-loading').classList.remove('d-none');
+        document.getElementById('portfolio-summary-content').classList.add('d-none');
+        
+        fetch('/portfolio/summary')
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById('portfolio-table-body');
+                tableBody.innerHTML = '';
+                
+                if (data.holdings.length > 0) {
+                    data.holdings.forEach(holding => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${holding.symbol}</td>
+                            <td>${holding.type}</td>
+                            <td>${typeof holding.price === 'number' ? '$' + holding.price.toFixed(2) : holding.price}</td>
+                            <td>${typeof holding.value === 'number' ? '$' + holding.value.toFixed(2) : holding.value}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                    
+                    document.getElementById('total-portfolio-value').textContent = '$' + data.total_value.toFixed(2);
+                    document.getElementById('portfolio-empty').classList.add('d-none');
+                } else {
+                    document.getElementById('portfolio-empty').classList.remove('d-none');
+                }
+                
+                document.getElementById('portfolio-summary-loading').classList.add('d-none');
+                document.getElementById('portfolio-summary-content').classList.remove('d-none');
+            })
+            .catch(error => {
+                console.error('Error loading portfolio:', error);
+                document.getElementById('portfolio-summary-loading').classList.add('d-none');
+                document.getElementById('portfolio-summary-content').classList.remove('d-none');
+                document.getElementById('portfolio-empty').classList.remove('d-none');
+                document.getElementById('portfolio-empty').textContent = 'Error loading portfolio data.';
+            });
+    }
+    
+    // Check alerts
+    function checkAlerts() {
+        document.getElementById('alerts-loading').classList.remove('d-none');
+        document.getElementById('alerts-content').classList.add('d-none');
+        
+        fetch('/alerts/check')
+            .then(response => response.json())
+            .then(data => {
+                const alertsContainer = document.getElementById('triggered-alerts');
+                alertsContainer.innerHTML = '';
+                
+                if (data.triggered_count > 0) {
+                    data.triggered_alerts.forEach(alert => {
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert alert-danger';
+                        alertDiv.innerHTML = `
+                            <strong>${alert.symbol} (${alert.type}):</strong> Price is ${alert.condition} $${alert.target_price.toFixed(2)}
+                        `;
+                        alertsContainer.appendChild(alertDiv);
+                    });
+                    document.getElementById('alerts-empty').classList.add('d-none');
+                } else {
+                    document.getElementById('alerts-empty').classList.remove('d-none');
+                }
+                
+                document.getElementById('alerts-loading').classList.add('d-none');
+                document.getElementById('alerts-content').classList.remove('d-none');
+            })
+            .catch(error => {
+                console.error('Error checking alerts:', error);
+                document.getElementById('alerts-loading').classList.add('d-none');
+                document.getElementById('alerts-content').classList.remove('d-none');
+                document.getElementById('alerts-empty').classList.remove('d-none');
+                document.getElementById('alerts-empty').textContent = 'Error checking alerts.';
+            });
+    }
+    
+    // Market lookup
+    document.getElementById('market-lookup-btn').addEventListener('click', function() {
+        const symbol = document.getElementById('market-symbol').value.trim();
+        const assetType = document.getElementById('market-asset-type').value;
+        
+        if (!symbol) return;
+        
+        document.getElementById('market-result').classList.add('d-none');
+        document.getElementById('market-error').classList.add('d-none');
+        
+        const formData = new FormData();
+        formData.append('symbol', symbol);
+        formData.append('asset_type', assetType);
+        
+        fetch('/get_price', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('market-symbol-display').textContent = data.symbol;
+                    document.getElementById('market-price').textContent = '$' + data.price.toFixed(2);
+                    
+                    if (data.change !== undefined) {
+                        const changeElement = document.getElementById('market-change');
+                        const isPositive = data.change >= 0;
+                        changeElement.textContent = (isPositive ? '+' : '') + data.change.toFixed(2) + ' (' + data.change_percent + ')';
+                        changeElement.className = isPositive ? 'mb-3 text-success' : 'mb-3 text-danger';
+                    } else {
+                        document.getElementById('market-change').textContent = 'N/A';
+                        document.getElementById('market-change').className = 'mb-3';
+                    }
+                    
+                    document.getElementById('market-result').classList.remove('d-none');
+                } else {
+                    document.getElementById('market-error').classList.remove('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching price:', error);
+                document.getElementById('market-error').classList.remove('d-none');
+            });
+    });
+    
+    // Chart lookup
+    let priceChart = null;
+    
+    document.getElementById('chart-lookup-btn').addEventListener('click', function() {
+        const symbol = document.getElementById('chart-symbol').value.trim();
+        if (!symbol) return;
+        
+        document.getElementById('chart-loading').classList.remove('d-none');
+        document.getElementById('chart-error').classList.add('d-none');
+        
+        if (priceChart) {
+            priceChart.destroy();
+        }
+        
+        const formData = new FormData();
+        formData.append('symbol', symbol);
+        
+        fetch('/get_historical_data', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('chart-loading').classList.add('d-none');
+                
+                if (data.success && data.data.length > 0) {
+                    const chartData = data.data.slice(-30); // Last 30 days
+                    
+                    const ctx = document.getElementById('price-chart').getContext('2d');
+                    priceChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: chartData.map(item => item.date),
+                            datasets: [{
+                                label: data.symbol + ' Price',
+                                data: chartData.map(item => item.price),
+                                borderColor: 'rgba(40, 167, 69, 1)',
+                                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: {
+                                    ticks: {
+                                        maxTicksLimit: 10
+                                    }
+                                },
+                                y: {
+                                    beginAtZero: false
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    document.getElementById('chart-error').classList.remove('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching historical data:', error);
+                document.getElementById('chart-loading').classList.add('d-none');
+                document.getElementById('chart-error').classList.remove('d-none');
+            });
+    });
+    
+    // Check alerts button
+    document.getElementById('check-alerts-btn').addEventListener('click', checkAlerts);
+    
+    // Load data on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadPortfolioSummary();
+        checkAlerts();
+    });
+    
+    // Refresh data periodically (every 60 seconds)
+    setInterval(loadPortfolioSummary, 60000);
+    setInterval(checkAlerts, 60000);
+</script>
+{% endblock %}

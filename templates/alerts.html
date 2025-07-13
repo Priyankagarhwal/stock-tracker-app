@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+
+{% block title %}Price Alerts - Stock Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-bell me-2"></i>Price Alerts
+                </h2>
+                <p class="card-text">Set up alerts to be notified when prices reach your target levels.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Alerts List Card -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-bell me-2"></i>Your Alerts
+                </h5>
+                <div>
+                    <button id="check-alerts-btn" class="btn btn-sm btn-dark me-2">
+                        <i class="fas fa-sync-alt me-1"></i>Check Now
+                    </button>
+                    <button id="reset-alerts-btn" class="btn btn-sm btn-outline-dark">
+                        <i class="fas fa-undo me-1"></i>Reset All
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="alerts-loading" class="text-center py-5">
+                    <div class="spinner-border text-warning" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading alerts...</p>
+                </div>
+                
+                <div id="alerts-content" class="d-none">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Type</th>
+                                    <th>Condition</th>
+                                    <th>Target Price</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="alerts-table-body">
+                                <!-- Alerts data will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="alerts-empty" class="alert alert-info d-none">
+                        You don't have any price alerts set up. Add some using the form on the right.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Alert Card -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus-circle me-2"></i>Add Alert
+                </h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('add_alert') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="symbol" class="form-label">Symbol</label>
+                        <input type="text" class="form-control" id="symbol" name="symbol" placeholder="e.g., AAPL, BTC" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="asset_type" class="form-label">Asset Type</label>
+                        <select class="form-select" id="asset_type" name="asset_type" required>
+                            <option value="stock">Stock</option>
+                            <option value="crypto">Cryptocurrency</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="target_price" class="form-label">Target Price</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="target_price" name="target_price" step="0.01" min="0.01" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="condition" class="form-label">Condition</label>
+                        <select class="form-select" id="condition" name="condition" required>
+                            <option value="above">Price goes above target</option>
+                            <option value="below">Price goes below target</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100">
+                        <i class="fas fa-bell me-1"></i>Set Alert
+                    </button>
+                </form>
+                
+                <div class="mt-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="fas fa-info-circle me-1"></i>How Alerts Work
+                            </h6>
+                            <p class="card-text small">
+                                Alerts will be checked automatically when you visit the dashboard. You can also check them manually by clicking the "Check Now" button.
+                            </p>
+                            <p class="card-text small">
+                                Once an alert is triggered, it will remain in "triggered" status until you reset it.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Remove Alert Modal -->
+<div class="modal fade" id="removeAlertModal" tabindex="-1" aria-labelledby="removeAlertModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="removeAlertModalLabel">Confirm Removal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to remove this alert?</p>
+                <p id="remove-alert-details" class="fw-bold"></p>
+            </div>
+            <div class="modal-footer">
+                <form action="{{ url_for('remove_alert') }}" method="POST">
+                    <input type="hidden" id="remove-alert-symbol" name="symbol">
+                    <input type="hidden" id="remove-alert-asset-type" name="asset_type">
+                    <input type="hidden" id="remove-alert-target-price" name="target_price">
+                    <input type="hidden" id="remove-alert-condition" name="condition">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Remove</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Alerts Confirmation Modal -->
+<div class="modal fade" id="resetAlertsModal" tabindex="-1" aria-labelledby="resetAlertsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetAlertsModalLabel">Confirm Reset</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to reset all triggered alerts?</p>
+                <p>This will allow them to be triggered again when conditions are met.</p>
+            </div>
+            <div class="modal-footer">
+                <form action="{{ url_for('reset_alerts') }}" method="POST">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Reset All Alerts</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Load alerts data
+    function loadAlertsData() {
+        document.getElementById('alerts-loading').classList.remove('d-none');
+        document.getElementById('alerts-content').classList.add('d-none');
+        
+        // Get alerts from the server
+        fetch('/alerts/check')
+            .then(response => response.json())
+            .then(data => {
+                // Get all alerts (not just triggered ones)
+                const alerts = {{ alerts|tojson }};
+                const tableBody = document.getElementById('alerts-table-body');
+                tableBody.innerHTML = '';
+                
+                if (alerts && alerts.length > 0) {
+                    alerts.forEach(alert => {
+                        const row = document.createElement('tr');
+                        
+                        // Check if this alert is in the triggered list
+                        const isTriggered = data.triggered_alerts.some(
+                            triggered => triggered.symbol === alert.symbol && 
+                                        triggered.type === alert.type &&
+                                        triggered.target_price === alert.target_price &&
+                                        triggered.condition === alert.condition
+                        );
+                        
+                        // Create status badge
+                        const statusBadge = alert.triggered || isTriggered
+                            ? '<span class="badge bg-danger">Triggered</span>'
+                            : '<span class="badge bg-success">Active</span>';
+                        
+                        row.innerHTML = `
+                            <td>${alert.symbol}</td>
+                            <td>${alert.type.charAt(0).toUpperCase() + alert.type.slice(1)}</td>
+                            <td>${alert.condition.charAt(0).toUpperCase() + alert.condition.slice(1)}</td>
+                            <td>$${alert.target_price.toFixed(2)}</td>
+                            <td>${statusBadge}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger remove-alert-btn" 
+                                        data-symbol="${alert.symbol}" 
+                                        data-type="${alert.type}"
+                                        data-price="${alert.target_price}"
+                                        data-condition="${alert.condition}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                    
+                    // Add event listeners to remove buttons
+                    document.querySelectorAll('.remove-alert-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const symbol = this.getAttribute('data-symbol');
+                            const assetType = this.getAttribute('data-type');
+                            const targetPrice = this.getAttribute('data-price');
+                            const condition = this.getAttribute('data-condition');
+                            
+                            document.getElementById('remove-alert-details').textContent = 
+                                `${symbol} ${condition} $${parseFloat(targetPrice).toFixed(2)}`;
+                            
+                            document.getElementById('remove-alert-symbol').value = symbol;
+                            document.getElementById('remove-alert-asset-type').value = assetType;
+                            document.getElementById('remove-alert-target-price').value = targetPrice;
+                            document.getElementById('remove-alert-condition').value = condition;
+                            
+                            const removeModal = new bootstrap.Modal(document.getElementById('removeAlertModal'));
+                            removeModal.show();
+                        });
+                    });
+                    
+                    document.getElementById('alerts-empty').classList.add('d-none');
+                } else {
+                    document.getElementById('alerts-empty').classList.remove('d-none');
+                }
+                
+                document.getElementById('alerts-loading').classList.add('d-none');
+                document.getElementById('alerts-content').classList.remove('d-none');
+            })
+            .catch(error => {
+                console.error('Error loading alerts:', error);
+                document.getElementById('alerts-loading').classList.add('d-none');
+                document.getElementById('alerts-content').classList.remove('d-none');
+                document.getElementById('alerts-empty').classList.remove('d-none');
+                document.getElementById('alerts-empty').textContent = 'Error loading alerts data.';
+            });
+    }
+    
+    // Check alerts button
+    document.getElementById('check-alerts-btn').addEventListener('click', loadAlertsData);
+    
+    // Reset alerts button
+    document.getElementById('reset-alerts-btn').addEventListener('click', function() {
+        const resetModal = new bootstrap.Modal(document.getElementById('resetAlertsModal'));
+        resetModal.show();
+    });
+    
+    // Load data on page load
+    document.addEventListener('DOMContentLoaded', loadAlertsData);
+</script>
+{% endblock %}

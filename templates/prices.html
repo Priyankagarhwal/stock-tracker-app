@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+
+{% block title %}Current Prices - Stock Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <i class="fas fa-dollar-sign me-2"></i>Current Prices
+                </h2>
+                <p class="card-text">Look up current prices for stocks and cryptocurrencies.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-search-dollar me-2"></i>Price Lookup
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="price-lookup-form">
+                    <div class="mb-3">
+                        <label for="symbol" class="form-label">Symbol</label>
+                        <input type="text" class="form-control" id="symbol" name="symbol" placeholder="e.g., AAPL, BTC" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="asset_type" class="form-label">Asset Type</label>
+                        <select class="form-select" id="asset_type" name="asset_type" required>
+                            <option value="stock">Stock</option>
+                            <option value="crypto">Cryptocurrency</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>Get Price
+                    </button>
+                </form>
+                
+                <div id="price-result" class="mt-4 d-none">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h4 id="result-symbol" class="card-title mb-3"></h4>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="text-muted">Current Price</h6>
+                                    <h3 id="result-price" class="mb-0"></h3>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="text-muted">Daily Change</h6>
+                                    <h3 id="result-change" class="mb-0"></h3>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button id="add-to-portfolio-btn" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-plus-circle me-1"></i>Add to Portfolio
+                                </button>
+                                <button id="set-alert-btn" class="btn btn-sm btn-outline-warning ms-2">
+                                    <i class="fas fa-bell me-1"></i>Set Alert
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="price-error" class="alert alert-danger mt-4 d-none">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <span id="error-message">Could not fetch price data. Please check the symbol and try again.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Popular Symbols
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2 mb-3">Stocks</h6>
+                        <div class="list-group">
+                            <button class="list-group-item list-group-item-action symbol-btn" data-symbol="AAPL" data-type="stock">
+                                <strong>AAPL</strong> - Apple Inc.
+                            </button>
+                            <button class="list-group-item list-group-item-action symbol-btn" data-symbol="MSFT" data-type="stock">
+                                <strong>MSFT</strong> - Microsoft Corp.
+                            </button>
+                            <button class="list-group-item list-group-item-action symbol-btn" data-symbol="GOOGL" data-type="stock">
+                                <strong>GOOGL</strong> - Alphabet Inc.
+                            </button>
+                            <button class="list-group-item list-group-item-action symbol-btn" data-symbol="AMZN" data-type="stock">
+                                <strong>AMZN</strong> - Amazon.com Inc.
+                            </button>
+                            <button class="list-group-item list-group-item-action symbol-btn" data-symbol="TSLA" data-type="stock">
+                                <strong>TSLA</strong> - Tesla Inc.
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2 mb-3">Cryptocurrencies</h6>
+                        <div class="list-group">
+                            <button class="list-group-item list-group-item-action symbol-btn" data-symbol="BTC" data-type="crypto">
+                                <strong>BTC</strong> - Bitcoin
+                            </button>
+                            <button class="list-group-item list-group-item-action symbol-btn" data-symbol="ETH" data-type="crypto">
+                                <strong>ETH</strong> - Ethereum
+                            </button>
+                            <button class="list-group-item list-group-item-action symbol-btn" data-symbol="XRP" data-type="crypto">
+                                <strong>XRP</strong> - Ripple
+                            </button>
+                            <button class="list-group-item list-group-item-action symbol-btn" data-symbol="DOGE" data-type="crypto">
+                                <strong>DOGE</strong> - Dogecoin
+                            </button>
+                            <button class="list-group-item list-group-item-action symbol-btn" data-symbol="SOL" data-type="crypto">
+                                <strong>SOL</strong> - Solana
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add to Portfolio Modal -->
+<div class="modal fade" id="portfolioModal" tabindex="-1" aria-labelledby="portfolioModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="portfolioModalLabel">Add to Portfolio</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('add_holding') }}" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" id="portfolio-symbol" name="symbol">
+                    <input type="hidden" id="portfolio-asset-type" name="asset_type">
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" step="0.0001" min="0.0001" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add to Portfolio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Set Alert Modal -->
+<div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="alertModalLabel">Set Price Alert</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('add_alert') }}" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" id="alert-symbol" name="symbol">
+                    <input type="hidden" id="alert-asset-type" name="asset_type">
+                    <div class="mb-3">
+                        <label for="target_price" class="form-label">Target Price</label>
+                        <input type="number" class="form-control" id="target_price" name="target_price" step="0.01" min="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="condition" class="form-label">Condition</label>
+                        <select class="form-select" id="condition" name="condition" required>
+                            <option value="above">Price goes above target</option>
+                            <option value="below">Price goes below target</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Set Alert</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Price lookup form submission
+    document.getElementById('price-lookup-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        
+        const symbol = document.getElementById('symbol').value.trim();
+        const assetType = document.getElementById('asset_type').value;
+        
+        if (!symbol) return;
+        
+        // Hide previous results and errors
+        document.getElementById('price-result').classList.add('d-none');
+        document.getElementById('price-error').classList.add('d-none');
+        
+        // Show loading indicator
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+        submitBtn.disabled = true;
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('symbol', symbol);
+        formData.append('asset_type', assetType);
+        
+        // Fetch price data
+        fetch('/get_price', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Reset button
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = false;
+            
+            if (data.success) {
+                // Update result display
+                document.getElementById('result-symbol').textContent = data.symbol + (assetType === 'crypto' ? ' (Crypto)' : ' (Stock)');
+                document.getElementById('result-price').textContent = '$' + data.price.toFixed(2);
+                
+                // Set up portfolio and alert buttons
+                document.getElementById('portfolio-symbol').value = data.symbol;
+                document.getElementById('portfolio-asset-type').value = assetType;
+                document.getElementById('alert-symbol').value = data.symbol;
+                document.getElementById('alert-asset-type').value = assetType;
+                
+                // Show change if available (stocks only)
+                if (data.change !== undefined) {
+                    const changeElement = document.getElementById('result-change');
+                    const isPositive = data.change >= 0;
+                    changeElement.textContent = (isPositive ? '+' : '') + data.change.toFixed(2) + ' (' + data.change_percent + ')';
+                    changeElement.className = isPositive ? 'mb-0 text-success' : 'mb-0 text-danger';
+                } else {
+                    document.getElementById('result-change').textContent = 'N/A';
+                    document.getElementById('result-change').className = 'mb-0';
+                }
+                
+                // Show result
+                document.getElementById('price-result').classList.remove('d-none');
+            } else {
+                // Show error
+                document.getElementById('error-message').textContent = data.message || 'Could not fetch price data. Please check the symbol and try again.';
+                document.getElementById('price-error').classList.remove('d-none');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = false;
+            document.getElementById('error-message').textContent = 'An error occurred while fetching data. Please try again.';
+            document.getElementById('price-error').classList.remove('d-none');
+        });
+    });
+    
+    // Quick symbol buttons
+    document.querySelectorAll('.symbol-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const symbol = this.getAttribute('data-symbol');
+            const assetType = this.getAttribute('data-type');
+            
+            document.getElementById('symbol').value = symbol;
+            document.getElementById('asset_type').value = assetType;
+            
+            // Trigger form submission
+            document.getElementById('price-lookup-form').dispatchEvent(new Event('submit'));
+        });
+    });
+    
+    // Add to portfolio button
+    document.getElementById('add-to-portfolio-btn').addEventListener('click', function() {
+        const portfolioModal = new bootstrap.Modal(document.getElementById('portfolioModal'));
+        portfolioModal.show();
+    });
+    
+    // Set alert button
+    document.getElementById('set-alert-btn').addEventListener('click', function() {
+        const alertModal = new bootstrap.Modal(document.getElementById('alertModal'));
+        
+        // Pre-fill the current price
+        const currentPrice = document.getElementById('result-price').textContent;
+        if (currentPrice) {
+            const priceValue = parseFloat(currentPrice.replace('$', ''));
+            document.getElementById('target_price').value = priceValue.toFixed(2);
+        }
+        
+        alertModal.show();
+    });
+</script>
+{% endblock %}
