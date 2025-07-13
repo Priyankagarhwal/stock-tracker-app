@@ -39,10 +39,16 @@ A comprehensive web application for tracking stocks and cryptocurrencies, managi
    ```
 
 4. Set up environment variables:
-   Create a `.env` file in the root directory with the following content:
-   ```
-   ALPHA_VANTAGE_API_KEY=your_api_key_here
-   ```
+   - Copy the `.env.example` file to a new file named `.env`:
+     ```
+     cp .env.example .env  # On Windows: copy .env.example .env
+     ```
+   - Get your Alpha Vantage API key by signing up at [Alpha Vantage](https://www.alphavantage.co/support/#api-key)
+   - Edit the `.env` file and replace `your_api_key_here` with your actual API key:
+     ```
+     ALPHA_VANTAGE_API_KEY=your_actual_api_key
+     ```
+   - **IMPORTANT**: Never commit your `.env` file to version control. It's already in `.gitignore` to prevent accidental commits.
 
 5. Run the application:
    ```
@@ -72,7 +78,8 @@ stock_tracker_app/
 │   ├── alerts.html         # Alert management page
 │   ├── prices.html         # Price lookup page
 │   └── historical.html     # Historical data visualization page
-├── .env                    # Environment variables
+├── .env.example            # Example environment variables template
+├── .env                    # Environment variables (not in version control)
 └── requirements.txt        # Python dependencies
 ```
 
